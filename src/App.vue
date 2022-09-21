@@ -1,6 +1,6 @@
 <template>
   <div class="bg-gray-100 h-screen">
-    <div v-if="$route.path.includes('sign-in') < 1" id="header">
+    <div v-if="route && route.path.includes('sign-in') < 1" id="header">
       <div class="relative bg-white py-2">
         <div class="px-4 sm:px-6">
           <div
@@ -40,7 +40,6 @@
                 aria-expanded="false"
               >
                 <span class="sr-only">Open menu</span>
-                <!-- Heroicon name: outline/menu -->
                 <svg
                   class="h-6 w-6"
                   xmlns="http://www.w3.org/2000/svg"
@@ -238,14 +237,21 @@
 </template>
 <script>
 import { reactive  } from 'vue';
+import { useRouter, useRoute } from 'vue-router'
 export default {
   setup() {
+    let router = useRouter();
+    let route = useRoute();
+
     let data = reactive({
       isToken: false
     })
 
     return {
-      data
+      router,
+      route,
+
+      data,
     }
   },
 }

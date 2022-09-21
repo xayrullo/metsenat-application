@@ -12,7 +12,7 @@
           bg-gray-50
         "
       >
-        <div v-if="!data.isSended" class="mx-auto w-full">
+        <div v-if="!store.state.isSubmittedToSponsor" class="mx-auto w-full">
           <div>
             <h2 class="mt-6 text-3xl tracking-tight font-bold text-gray-900">
               Homiy sifatida ariza topshirish
@@ -102,7 +102,7 @@
                     <input
                       id="name"
                       name="name"
-                      v-model="data.sponsor.fullname"
+                      v-model="data.sponsor.full_name"
                       placeholder="Abdullayev Abdulla Abdulla o'g'li"
                       required
                       class="
@@ -160,6 +160,87 @@
                     for="name"
                     class="block text-sm font-medium text-gray-700"
                   >
+                    To'lov turi
+                  </label>
+                  <div
+                    class="
+                      mt-4
+                      grid grid-cols-1
+                      gap-y-6
+                      sm:grid-cols-3 sm:gap-x-4
+                    "
+                  >
+                    <label
+                      v-for="(type, index) in paymentType"
+                      :key="index"
+                      class="
+                        relative
+                        bg-white
+                        border
+                        rounded-lg
+                        shadow-sm
+                        p-4
+                        flex
+                        cursor-pointer
+                        focus:outline-none
+                      "
+                      :class="
+                        data.sponsor.payment_type === type.id
+                          ? 'border-transparent border-blue-500 ring-2 ring-blue-500'
+                          : 'border-gray-300'
+                      "
+                      @click="selectPaymentType(type)"
+                    >
+                      <input
+                        type="radio"
+                        name="project-type"
+                        value="Newsletter"
+                        class="sr-only"
+                        aria-labelledby="project-type-0-label"
+                        aria-describedby="project-type-0-description-0 project-type-0-description-1"
+                      />
+                      <span class="flex-1 flex">
+                        <span class="flex flex-col align-middle">
+                          <span>{{ type.title }}</span>
+                        </span>
+                      </span>
+                      <svg
+                        :class="data.sponsor.payment_type === type.id ? '' : 'invisible'"
+                        class="h-5 w-5 text-blue-600"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                      <span
+                        class="
+                          absolute
+                          -inset-px
+                          rounded-lg
+                          border-2
+                          pointer-events-none
+                        "
+                        :class="
+                          data.sponsor.payment_type === type.id
+                            ? 'border border-blue-500'
+                            : 'border-2 border-transparent'
+                        "
+                        aria-hidden="true"
+                      ></span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label
+                    for="name"
+                    class="block text-sm font-medium text-gray-700"
+                  >
                     To'lov summasi
                   </label>
                   <div
@@ -171,7 +252,7 @@
                     "
                   >
                     <label
-                      v-for="(sum, index) in data.sums"
+                      v-for="(sum, index) in tariffs"
                       :key="index"
                       class="
                         relative
@@ -201,11 +282,11 @@
                       />
                       <span class="flex-1 flex">
                         <span class="flex flex-col align-middle">
-                          <span>{{ tools.currency(sum.price) }}</span>
+                          <span>{{ tools.currency(sum.summa) }}</span>
                         </span>
                       </span>
                       <svg
-                        :class="sum.checked ? '' : 'invisible'"
+                        :class="data.sponsor.sum === sum.summa ? '' : 'invisible'"
                         class="h-5 w-5 text-blue-600"
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20"
@@ -227,7 +308,7 @@
                           pointer-events-none
                         "
                         :class="
-                          sum.checked
+                          data.sponsor.sum === sum.summa
                             ? 'border border-blue-500'
                             : 'border-2 border-transparent'
                         "
@@ -401,7 +482,6 @@
                 border border-green-600
               "
             >
-              <!-- Heroicon name: outline/check -->
               <svg
                 class="text-green-600 h-40 w-40"
                 xmlns="http://www.w3.org/2000/svg"
@@ -459,63 +539,76 @@
   </div>
 </template>
 <script>
-import { reactive, onMounted } from 'vue';
+import { reactive, computed, onMounted } from 'vue';
+import { useStore } from 'vuex'
 import tools from '@/utils/tools'
 export default {
   setup() {
+    const store = useStore()
+    console.log(store)
     let data = reactive({
       sponsor: {
-        fullname: '',
+        full_name: '',
         phone: '',
+        payment_type: null,
         sum: null,
-        firm: ''
+        firm: '',
+        spent: null,
+        comment: '',
       },
       isActive: 'physical',
-      sums: [
-        { price: 1000000, checked: false },
-        { price: 5000000, checked: false },
-        { price: 7000000, checked: false },
-        { price: 10000000, checked: false },
-        { price: 30000000, checked: false }
-      ],
       isOtherPrice: false,
       isSended: false
     })
 
-    onMounted(() => {})
+    const tariffs = computed(() => store.getters.getTariffs).value
+    const paymentType = computed(() => store.getters.getPaymentType).value
+    console.log('Tariffs: ', tariffs)
+
+    const fetchDirectories = async () => {
+      await store.dispatch('getTariffs')
+      await store.dispatch('getPaymentType')
+    }
+
+    onMounted(fetchDirectories)
 
     function changeNav(status) {
       data.isActive = status
     }
 
+    function selectPaymentType(type) {
+      data.sponsor.payment_type = type.id
+    }
+
     function selectSum(sum) {
-      data.sums.forEach((e) => {
-        if (e.price === sum.price) {
-          data.sponsor.sum = sum.price
-          e.checked = true
-        } else {
-          e.checked = false
-        }
-      })
+      data.sponsor.sum = sum.summa
+      data.isOtherPrice = false
     }
 
     function selectOtherPrice() {
-      data.sums.forEach((e) => {
-        e.checked = false
-      })
       data.sponsor.sum = null
       data.isOtherPrice = true
     }
 
     function onSubmit() {
-      console.log('Submitted')
+      if (data.sponsor.payment_type && data.sponsor.sum) {
+        console.log('Submitted', data.sponsor)
+        return
+      }
+      alert('Iltimos to\'lov turi bilan to\'lov summalaridan birini tanlang')
     }
 
     return {
       data,
       tools,
+      
+      tariffs,
+      paymentType,
+      
+      store,
 
       changeNav,
+      selectPaymentType,
       selectSum,
       selectOtherPrice,
       onSubmit

@@ -1,5 +1,6 @@
 import { createStore } from 'vuex'
-
+import direcotry from './modules/directory'
+import sponsor from './modules/sponsor'
 export default createStore({
   state: {
   },
@@ -10,5 +11,7 @@ export default createStore({
   actions: {
   },
   modules: {
+    direcotry,
+    sponsor
   }
 })

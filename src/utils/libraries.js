@@ -1,7 +1,10 @@
-// import { createApp } from 'vue'
-// import App from '@/App.vue'
-// const app = createApp(App)
+import { createApp } from 'vue'
+import App from '@/App.vue'
+const app = createApp(App)
 
-// // app.use(VueMask);
+import axios from 'axios'
+import VueAxios from 'vue-axios'
 
-// app.mount('#app')
+app.use(VueAxios, axios);
+
+app.mount('#app')
